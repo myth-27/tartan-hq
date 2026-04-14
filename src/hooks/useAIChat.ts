@@ -47,7 +47,8 @@ YOUR ROLE: Help underwriters interpret verification results.
 - Reference missing data points impacting the score.
 - Be concise (3-4 sentences), precise, and decisive. Enterprise risk depends on it.`;
 
-      const url = 'https://integrate.api.nvidia.com/v1/chat/completions';
+      // Now calling our secure local proxy instead of direct NVIDIA API
+      const url = '/api/chat';
       
       const payload = {
         model: 'meta/llama-3.1-70b-instruct',
@@ -66,15 +67,14 @@ YOUR ROLE: Help underwriters interpret verification results.
       const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`NVIDIA API returned ${response.status}: ${errText}`);
+        const errorDetail = await response.text();
+        throw new Error(`Proxy Error (${response.status}): ${errorDetail}`);
       }
 
       const data = await response.json();
@@ -91,7 +91,7 @@ YOUR ROLE: Help underwriters interpret verification results.
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: `Error connecting to NVIDIA Engine: ${error instanceof Error ? error.message : 'Unknown error'}. Please check your console.`,
+        content: `Connection Issue: ${error instanceof Error ? error.message : 'Unknown error'}. This usually means the backend is starting up. Please try again in a few seconds.`,
         timestamp: new Date().toISOString()
       }]);
     } finally {
