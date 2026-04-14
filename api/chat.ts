@@ -10,7 +10,7 @@ export default async function handler(req: Request) {
 
   try {
     const body = await req.json();
-    const apiKey = process.env.VITE_NVIDIA_API_KEY;
+    const apiKey = (process as any).env.VITE_NVIDIA_API_KEY;
 
     if (!apiKey) {
       console.error("VITE_NVIDIA_API_KEY not found in environment variables");
