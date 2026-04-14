@@ -8,33 +8,32 @@ export function useAIChat() {
   const sendMessage = useCallback(async (content: string, caseContext: VerificationCase | null) => {
     if (!content.trim() || !caseContext) return;
 
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-
-    // Add user message immediately
+    // Add user message immediately to the UI
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'user',
       content,
       timestamp: new Date().toISOString()
     };
-    
     setMessages(prev => [...prev, userMsg]);
+
+    setIsLoading(true);
+
+    const apiKey = import.meta.env.VITE_NVIDIA_API_KEY;
 
     if (!apiKey) {
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: "Error: VITE_GEMINI_API_KEY is not set in your .env file.",
+        content: "Error: VITE_NVIDIA_API_KEY is not set in your .env file.",
         timestamp: new Date().toISOString()
       }]);
+      setIsLoading(false);
       return;
     }
 
-    setIsLoading(true);
-
-    const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
-    
-    const systemPrompt = `You are Tartan's HyperVerify AI Confidence Engine — an analyst embedded in an enterprise verification platform.
+    try {
+      const systemPrompt = `You are Tartan's HyperVerify AI Confidence Engine — an analyst embedded in an enterprise verification platform.
 CURRENT CASE:
 - Applicant: ${caseContext.applicant.name} (${caseContext.applicant.role})
 - Confidence Score: ${caseContext.result.score}% [${caseContext.result.tier}]
@@ -48,82 +47,56 @@ YOUR ROLE: Help underwriters interpret verification results.
 - Reference missing data points impacting the score.
 - Be concise (3-4 sentences), precise, and decisive. Enterprise risk depends on it.`;
 
-    let aiContent = '';
-    let lastError = '';
+      const url = 'https://integrate.api.nvidia.com/v1/chat/completions';
+      
+      const payload = {
+        model: 'meta/llama-3.1-70b-instruct',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...messages.map(m => ({
+            role: m.role,
+            content: m.content
+          })),
+          { role: 'user', content }
+        ],
+        max_tokens: 500,
+        temperature: 0.2,
+      };
 
-    for (const model of models) {
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-        
-        const payload = {
-          systemInstruction: {
-            parts: [{ text: systemPrompt }]
-          },
-          contents: [
-            ...messages.map(m => ({
-              role: m.role === 'user' ? 'user' : 'model',
-              parts: [{ text: m.content }]
-            })),
-            {
-              role: 'user',
-              parts: [{ text: content }]
-            }
-          ],
-          generationConfig: {
-            maxOutputTokens: 500,
-            temperature: 0.3,
-          }
-        };
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(payload)
+      });
 
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload)
-        });
-
-        if (response.status >= 500) {
-          // If server error, try the next model in the list
-          console.warn(`Gemini ${model} returned ${response.status}. Trying next fallback...`);
-          lastError = `API ${response.status}: ${response.statusText}`;
-          continue;
-        }
-
-        if (!response.ok) {
-          throw new Error(`API returned ${response.status}: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        aiContent = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated.';
-        
-        // If we got content, break the loop
-        if (aiContent) break;
-
-      } catch (error) {
-        console.error(`Attempt with ${model} failed:`, error);
-        lastError = error instanceof Error ? error.message : 'Unknown error';
-        // Continue to next model on network/parse errors too
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`NVIDIA API returned ${response.status}: ${errText}`);
       }
-    }
 
-    if (aiContent) {
+      const data = await response.json();
+      const aiContent = data.choices?.[0]?.message?.content || 'No response generated.';
+
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(),
         role: 'assistant',
         content: aiContent,
         timestamp: new Date().toISOString()
       }]);
-    } else {
+    } catch (error) {
+      console.error("AI Chat Error:", error);
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: `Error connecting to Gemini API: ${lastError}. All fallback models exhausted. Please try again in 30 seconds.`,
+        content: `Error connecting to NVIDIA Engine: ${error instanceof Error ? error.message : 'Unknown error'}. Please check your console.`,
         timestamp: new Date().toISOString()
       }]);
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   }, [messages]);
 
   const clearMessages = useCallback(() => setMessages([]), []);
