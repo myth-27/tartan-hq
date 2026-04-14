@@ -8,8 +8,7 @@ export function useAIChat() {
   const sendMessage = useCallback(async (content: string, caseContext: VerificationCase | null) => {
     if (!content.trim() || !caseContext) return;
 
-    const endpoint = import.meta.env.VITE_AZURE_CLAUDE_ENDPOINT;
-    const apiKey = import.meta.env.VITE_AZURE_CLAUDE_API_KEY;
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
     // Add user message immediately
     const userMsg: ChatMessage = {
@@ -21,11 +20,11 @@ export function useAIChat() {
     
     setMessages(prev => [...prev, userMsg]);
 
-    if (!apiKey || !endpoint) {
+    if (!apiKey) {
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: "Error: VITE_AZURE_CLAUDE_API_KEY or VITE_AZURE_CLAUDE_ENDPOINT is not set in your .env file.",
+        content: "Error: VITE_GEMINI_API_KEY is not set in your .env file.",
         timestamp: new Date().toISOString()
       }]);
       return;
@@ -48,37 +47,44 @@ YOUR ROLE: Help underwriters interpret verification results.
 - Reference missing data points impacting the score.
 - Be concise (3-4 sentences), precise, and decisive. Enterprise risk depends on it.`;
 
-      // Transform history for Claude
-      const claudeMessages = messages.map(m => ({
-        role: m.role,
-        content: m.content
-      }));
-      claudeMessages.push({ role: 'user', content });
-
+      // Construct Gemini request payload
+      // Using gemini-1.5-flash as the standard model
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+      
       const payload = {
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1024,
-        system: systemPrompt,
-        messages: claudeMessages
+        systemInstruction: {
+          parts: [{ text: systemPrompt }]
+        },
+        contents: [
+          ...messages.map(m => ({
+            role: m.role === 'user' ? 'user' : 'model',
+            parts: [{ text: m.content }]
+          })),
+          {
+            role: 'user',
+            parts: [{ text: content }]
+          }
+        ],
+        generationConfig: {
+          maxOutputTokens: 500,
+          temperature: 0.3, // low temp for analytical responses
+        }
       };
 
-      const res = await fetch(`${endpoint}/v1/messages`, {
-        method: "POST",
+      const response = await fetch(url, {
+        method: 'POST',
         headers: {
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-          "content-type": "application/json"
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
       });
 
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`API ${res.status}: ${errText}`);
+      if (!response.ok) {
+        throw new Error(`API returned ${response.status}: ${response.statusText}`);
       }
 
-      const data = await res.json();
-      const aiContent = data.content?.[0]?.text || 'No response generated.';
+      const data = await response.json();
+      const aiContent = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated.';
 
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(),
@@ -88,14 +94,10 @@ YOUR ROLE: Help underwriters interpret verification results.
       }]);
     } catch (error) {
       console.error("AI Chat Error:", error);
-      let errMsg = error instanceof Error ? error.message : 'Unknown error';
-      if (errMsg.includes('not subscribed')) {
-        errMsg = "Azure Marketplace Subscription Error: Please ensure your Azure subscription for this model is active.";
-      }
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: `Connection Error: ${errMsg}`,
+        content: `Error connecting to Gemini API: ${error instanceof Error ? error.message : 'Unknown error'}. Please check your console.`,
         timestamp: new Date().toISOString()
       }]);
     } finally {
