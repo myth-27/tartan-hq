@@ -47,16 +47,16 @@ function App() {
           onSelect={handleSelectCase} 
         />
 
-        {/* Center/Right: Details + AI */}
-        <div className="flex-1 flex flex-col min-w-0">
-          <DetailPanel data={selectedCase} />
-          <AIPanel 
-            selectedCase={selectedCase}
-            messages={messages}
-            isLoading={isLoading}
-            onSend={(msg) => sendMessage(msg, selectedCase)}
-          />
-        </div>
+        {/* Center: Details */}
+        <DetailPanel data={selectedCase} />
+
+        {/* Right: AI Assistant */}
+        <AIPanel 
+          selectedCase={selectedCase}
+          messages={messages}
+          isLoading={isLoading}
+          onSend={(msg) => sendMessage(msg, selectedCase)}
+        />
       </main>
     </div>
   );

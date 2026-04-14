@@ -38,28 +38,30 @@ export function AIPanel({ selectedCase, messages, isLoading, onSend }: Props) {
 
   return (
     <div className={clsx(
-      "border-t border-slate-200 bg-white transition-all duration-300 flex flex-col",
-      isOpen ? "h-[400px]" : "h-14"
+      "border-l border-slate-200 bg-white shadow-xl transition-all duration-300 flex flex-col z-10",
+      isOpen ? "w-[420px]" : "w-14"
     )}>
       {/* Header Banner */}
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="h-14 px-6 flex items-center justify-between bg-white hover:bg-slate-50 transition-colors w-full border-b border-slate-100"
+        className="h-14 px-4 flex items-center justify-between bg-indigo-50 hover:bg-indigo-100 transition-colors w-full border-b border-indigo-100 flex-shrink-0"
       >
-        <div className="flex items-center gap-3 text-indigo-900">
-          <Bot className="w-5 h-5 text-indigo-600" />
-          <span className="font-semibold tracking-wide text-sm flex gap-2 items-center">
-            HYPERVERIFY AI ASSISTANT
-            <Sparkles className="w-3 h-3 text-amber-500" />
-          </span>
+        <div className="flex items-center gap-3 text-indigo-900 overflow-hidden whitespace-nowrap">
+          <Bot className="w-5 h-5 text-indigo-600 flex-shrink-0" />
+          {isOpen && (
+            <span className="font-bold tracking-wide text-sm flex gap-2 items-center text-indigo-900">
+              AI ASSISTANT
+              <Sparkles className="w-4 h-4 text-amber-500" />
+            </span>
+          )}
         </div>
-        <div className="text-slate-400">
-          {isOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
+        <div className="text-indigo-400 flex-shrink-0">
+          {isOpen ? <ChevronDown className="w-5 h-5 -rotate-90" /> : <ChevronUp className="w-5 h-5 -rotate-90" />}
         </div>
       </button>
 
       {isOpen && (
-        <div className="flex-1 flex flex-col overflow-hidden bg-slate-50/50">
+        <div className="flex-1 flex flex-col min-h-0 bg-slate-50/50">
           {/* Chat Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.length === 0 ? (
