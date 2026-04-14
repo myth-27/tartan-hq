@@ -39,7 +39,7 @@ function App() {
       </header>
 
       {/* Main Content Areas */}
-      <main className="flex-1 flex overflow-hidden">
+      <main className="flex-1 flex flex-col lg:flex-row overflow-auto lg:overflow-hidden relative">
         {/* Left: Queue */}
         <QueuePanel 
           cases={cases} 

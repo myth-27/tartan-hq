@@ -51,7 +51,7 @@ YOUR ROLE: Help underwriters interpret verification results.
       const url = '/api/chat';
       
       const payload = {
-        model: 'meta/llama-3.1-70b-instruct',
+        model: 'meta/llama-3.1-8b-instruct',
         messages: [
           { role: 'system', content: systemPrompt },
           ...messages.map(m => ({

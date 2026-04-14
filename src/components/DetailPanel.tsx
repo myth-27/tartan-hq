@@ -28,7 +28,7 @@ export function DetailPanel({ data }: Props) {
   return (
     <div className="flex-1 flex flex-col bg-slate-50 overflow-y-auto">
       {/* Header Profile Info */}
-      <div className="bg-white border-b border-slate-200 p-8 flex gap-8 items-center shadow-sm z-10">
+      <div className="bg-white border-b border-slate-200 p-4 lg:p-8 flex flex-col sm:flex-row gap-4 lg:gap-8 items-center sm:items-start text-center sm:text-left shadow-sm z-10 lg:flex-shrink-0">
         <ConfidenceRing score={result.score} tier={result.tier} size="lg" />
         
         <div className="flex-1">
@@ -53,12 +53,12 @@ export function DetailPanel({ data }: Props) {
         </div>
       </div>
 
-      <div className="p-8 max-w-5xl flex gap-8">
+      <div className="p-4 lg:p-8 max-w-5xl flex flex-col xl:flex-row gap-8">
         {/* Left Column: Field Data */}
-        <div className="flex-1 space-y-6">
+        <div className="flex-1 space-y-6 overflow-x-auto">
           <section>
             <h3 className="text-lg font-semibold text-slate-800 mb-4 tracking-tight">Verified Employment Data</h3>
-            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+            <div className="bg-white rounded-lg border border-slate-200 overflow-x-auto shadow-sm min-w-[600px] xl:min-w-0">
               <table className="w-full text-left">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
@@ -91,7 +91,7 @@ export function DetailPanel({ data }: Props) {
         </div>
 
         {/* Right Column: Narrative & Anomalies */}
-        <div className="w-96 space-y-6">
+        <div className="w-full xl:w-96 space-y-6">
           {/* Narrative Overview */}
           <section>
             <h3 className="text-lg font-semibold text-slate-800 mb-4 tracking-tight">Summary</h3>

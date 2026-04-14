@@ -13,7 +13,7 @@ export function QueuePanel({ cases, selectedId, onSelect }: Props) {
   const sortedCases = [...cases].sort((a, b) => b.result.score - a.result.score);
 
   return (
-    <div className="w-80 border-r border-slate-200 bg-white h-full flex flex-col">
+    <div className="w-full lg:w-80 border-b lg:border-b-0 lg:border-r border-slate-200 bg-white max-h-64 lg:max-h-none lg:h-full flex flex-col flex-shrink-0">
       <div className="p-4 border-b border-slate-200 flex items-center justify-between">
         <h2 className="font-semibold text-slate-800 tracking-tight">Verification Queue</h2>
         <span className="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-1 rounded-full">

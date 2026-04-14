@@ -38,8 +38,8 @@ export function AIPanel({ selectedCase, messages, isLoading, onSend }: Props) {
 
   return (
     <div className={clsx(
-      "border-l border-slate-200 bg-white shadow-xl transition-all duration-300 flex flex-col z-10",
-      isOpen ? "w-[420px]" : "w-14"
+      "border-t lg:border-t-0 lg:border-l border-slate-200 bg-white shadow-xl transition-all duration-300 flex flex-col z-10 lg:h-full lg:max-h-none",
+      isOpen ? "h-[500px] lg:w-[420px]" : "h-14 lg:w-14"
     )}>
       {/* Header Banner */}
       <button 
